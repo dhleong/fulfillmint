@@ -1,12 +1,12 @@
 (ns fulfillmint.core
-  (:require
-   [reagent.core :as reagent]
-   [re-frame.core :as re-frame]
-   [fulfillmint.events :as events]
-   [fulfillmint.routes :as routes]
-   [fulfillmint.views :as views]
-   [fulfillmint.config :as config]
-   ))
+  (:require [reagent.core :as reagent]
+            [re-frame.core :as re-frame]
+            [fulfillmint.data]
+            [fulfillmint.events :as events]
+            [fulfillmint.routes :as routes]
+            [fulfillmint.views :as views]
+            [fulfillmint.config :as config]
+            ))
 
 
 (defn dev-setup []
@@ -16,7 +16,7 @@
 
 (defn mount-root []
   (re-frame/clear-subscription-cache!)
-  (reagent/render [views/main-panel]
+  (reagent/render [views/main]
                   (.getElementById js/document "app")))
 
 (defn ^:export init []

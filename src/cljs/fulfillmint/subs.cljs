@@ -1,13 +1,6 @@
 (ns fulfillmint.subs
-  (:require
-   [re-frame.core :as re-frame]))
+  (:require [re-frame.core :refer [reg-sub subscribe]]))
 
-(re-frame/reg-sub
- ::name
- (fn [db]
-   (:name db)))
+; ======= Core ============================================
 
-(re-frame/reg-sub
- ::active-panel
- (fn [db _]
-   (:active-panel db)))
+(reg-sub :page :page)

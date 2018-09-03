@@ -2,4 +2,13 @@
 /target
 /*-init.clj
 /resources/public/js/compiled
+/resources/public/sources/
+/resources/public/css
 out
+.rebel_readline_history
+.lein-repl-history
+.lein-failures
+.cljs_nashorn_repl
+.repl
+nashorn_code_cache
+.planck_cache

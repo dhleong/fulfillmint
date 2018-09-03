@@ -3,7 +3,17 @@
                  [org.clojure/clojurescript "1.10.329"]
                  [reagent "0.8.1"]
                  [re-frame "0.10.5"]
-                 [secretary "1.2.3"]]
+                 [secretary "1.2.3"]
+
+                 [kibu/pushy "0.3.8"]
+
+                 [datascript "0.16.6"]
+                 [datascript-transit "0.2.2"
+                  :exclusions [com.cognitect/transit-cljs]]
+                 [com.cognitect/transit-cljs "0.8.256"]
+
+                 [alandipert/storage-atom "2.0.1"]
+                 ]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-less "1.7.5"]
@@ -18,7 +28,7 @@
 
   :min-lein-version "2.5.3"
 
-  :source-paths ["src/clj" "src/cljs"]
+  :source-paths ["src/clj" "src/cljc"]
   :test-paths ["test/clj"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"
@@ -45,6 +55,8 @@
                    ;; [cider/piggieback "0.3.6"]
                    [com.cemerick/piggieback "0.2.2"]]
 
+    :source-paths ["src/cljs"]
+
     :plugins      [[lein-figwheel "0.5.16"]
                    [lein-doo "0.1.8"]]}
 
@@ -63,7 +75,8 @@
                     :preloads             [devtools.preload
                                            day8.re-frame-10x.preload]
                     :closure-defines      {"re_frame.trace.trace_enabled_QMARK_" true
-                                           "day8.re_frame.tracing.trace_enabled_QMARK_" true}
+                                           "day8.re_frame.tracing.trace_enabled_QMARK_" true
+                                           wish.util.nav.LOCAL true}
                     :external-config      {:devtools/config {:features-to-install :all}}
                     }}
 

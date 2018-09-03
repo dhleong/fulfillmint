@@ -1,0 +1,46 @@
+
+// Flexbox mixins
+
+.flex(@wrap: false) {
+    display: -ms-flexbox!important;
+    display: flex;
+
+    & when(@wrap = wrap) {
+        -ms-flex-wrap: wrap !important;
+        flex-wrap: wrap !important;
+    }
+}
+
+// shorthand; `flex: @values`
+.flex-shrt(@values) {
+    -ms-flex: @values;
+    flex: @values;
+}
+
+.flex-shrink(@shrink) {
+    -ms-flex-shrink: @shrink;
+    flex-shrink: @shrink;
+}
+
+.flex-direction(@direction) {
+    -webkit-flex-direction: @direction;
+    -ms-flex-direction: @direction;
+    flex-direction: @direction;
+}
+
+.justify-content(@where: center) {
+    -ms-flex-pack: @where;
+    justify-content: @where;
+}
+
+.align-items(@where) {
+    -webkit-box-align: @where;
+    -ms-flex-align: @where;
+    align-items: @where;
+}
+
+.align-self(@where) {
+    -ms-grid-row-align: @where;
+    align-self: @where;
+}
+
