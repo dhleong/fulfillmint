@@ -1,7 +1,8 @@
 (ns ^{:author "Daniel Leong"
       :doc "util"}
   fulfillmint.data.persist.util
-  (:require [datascript.transit :as dt]))
+  (:require [datascript.core :as d]
+            [datascript.transit :as dt]))
 
 (defn inflate-transit
   "Inflate a serialized DB from a transit string"
