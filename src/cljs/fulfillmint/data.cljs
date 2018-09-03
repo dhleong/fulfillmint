@@ -36,8 +36,14 @@
 ;;
 ;; [:create-part {:id,:name,:quantity,:unit,:supplier}]
 ;;
-;; [:create-product {:name,:service,:service-id}]
+;; [:create-product {:name,:variants}] where variants is
+;; a collection of {:name,:default?,:group,:parts,:service-ids} and
+;; :parts is map of <part-id> -> units
 ;;
 ;; [:create-variant <product-id> {:parts}]
 ;;
-;; [:create-order ]
+;; [:create-pending-order {:service,:service-id,:link,:buyer-name,:products}]
+;; where :products is a sequence of:
+;;  {:id <service-id>
+;;   :variants [<variant-service-id>...]
+;;   :quantity <number>}
