@@ -38,12 +38,13 @@
                    kind)))
 
 (defn- transact!-with
-  "Create a function that passes its args to `f`
-   and calls `(transact!)` on the singleton conn
+  "Create a function that accepts a `conn` and some args, passing
+   the args to `f` and calling `(transact!)` on the conn
    and the result of `(f args)`"
   [f]
-  (fn transactor [& args]
-     (d/transact! conn (apply f args))))
+  (fn transactor [conn & args]
+    (println "transact! " f args)
+    (d/transact! conn (apply f args))))
 
 ; ======= Accessors =======================================
 
@@ -67,7 +68,6 @@
        (map (fn [[part-use part]]
               (assoc part :part-use/units
                      (:part-use/units part-use))))))
-
 
 
 ; ======= Validation ======================================

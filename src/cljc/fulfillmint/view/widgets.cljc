@@ -1,6 +1,6 @@
 (ns ^{:author "Daniel Leong"
       :doc "Shared widget macros"}
-  Fulfillment.views.widgets
+  fulfillmint.views.widgets
   (:require [clojure.string :as str]))
 
 (defmacro icon

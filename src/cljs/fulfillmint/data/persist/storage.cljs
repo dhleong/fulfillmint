@@ -7,7 +7,7 @@
             [fulfillmint.data.persist.util :refer [inflate-transit
                                                    serialize-transit]]))
 
-(defonce db-storage (local-storage (atom nil) :fulfillment-db))
+(defonce db-storage (local-storage (atom nil) :fulfillmint-db))
 
 (deftype LocalPersister []
   IDataPersister
