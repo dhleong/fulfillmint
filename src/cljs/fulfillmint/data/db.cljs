@@ -27,8 +27,6 @@
            db
            inputs)))
 
-(def ^:private transact! (partial d/transact! conn))
-
 (defn- all-of-kind
   "Returns a function that accepts a db (deref'd conn)
    and returns all eids of the given kind"
@@ -39,6 +37,13 @@
                         :where [?e :kind ?kind]]
                    kind)))
 
+(defn- transact!-with
+  "Create a function that passes its args to `f`
+   and calls `(transact!)` on the singleton conn
+   and the result of `(f args)`"
+  [f]
+  (fn transactor [& args]
+     (d/transact! conn (apply f args))))
 
 ; ======= Accessors =======================================
 
@@ -73,38 +78,38 @@
 
 ; ======= Datom creation ==================================
 
-(defn create-part [{:keys [name quantity unit supplier]
-                    :or {quantity 0
-                         unit "things"
-                         supplier ""}
-                    :as part}]
+(defn create-part-tx [{:keys [name quantity unit supplier]
+                       :or {quantity 0
+                            unit "things"
+                            supplier ""}
+                       :as part}]
   {:pre [(string? name)
          (not (empty? name))]}
-  (transact!
-    [{:kind :part
-      :name name
-      :quantity quantity
-      :unit unit
-      :supplier supplier}]))
+  [{:kind :part
+    :name name
+    :quantity quantity
+    :unit unit
+    :supplier supplier}])
+(def create-part (transact!-with create-part-tx))
 
-(defn create-pending-order
+(defn create-pending-order-tx
   [{:keys [service-id link buyer-name products]}]
-  (transact!
-    [{:kind :order
-      :service-ids service-id
-      :link link
-      :buyer-name buyer-name
-      :pending? true
+  [{:kind :order
+    :service-ids service-id
+    :link link
+    :buyer-name buyer-name
+    :pending? true
 
-      :order/items
-      (map
-        (fn [p]
-          {:kind :order-item
-           :order-item/product [:service-ids (:service-id p)]
-           :order-item/variants (mapv #(vector :service-ids %)
-                                     (:variants p))
-           :quantity (:quantity p)})
-        products)}]))
+    :order/items
+    (map
+      (fn [p]
+        {:kind :order-item
+         :order-item/product [:service-ids (:service-id p)]
+         :order-item/variants (mapv #(vector :service-ids %)
+                                    (:variants p))
+         :quantity (:quantity p)})
+      products)}])
+(def create-pending-order (transact!-with create-pending-order-tx))
 
 (defn- add-service-ids
   "For whatever reason, datascript doesn't seem to like it when
@@ -116,14 +121,14 @@
       [:db/add eid :service-ids id])
     service-ids))
 
-(defn- variant-txs
+(defn- create-variant-tx
   "Generate the sequence of transact statements
    used to add the variant `v` to the given `product-id`.
    `product-id` may be a lookup ref or a temporary eid.
    If `variant-id` is not provided, the temporary eid `-1`
    will be used for it."
   ([product-id v]
-   (variant-txs provider-id -1 v))
+   (create-variant-tx product-id -1 v))
   ([product-id variant-id v]
    (cons
      (->> {:db/id variant-id
@@ -146,28 +151,24 @@
           (filter second)
           (into {}))
 
-     (add-service-ids id (:service-ids v)))))
+     (add-service-ids variant-id (:service-ids v)))))
+(def create-variant (transact!-with create-variant-tx))
 
-(defn create-product [{:keys [name variants service-ids]}]
+(defn create-product-tx [{:keys [name variants service-ids]}]
   {:pre [(string? name)
          (every? valid-variant? variants)]}
-  (transact!
-    (concat
-      [{:db/id -1
-        :kind :product
-        :name name}]
+  (concat
+    [{:db/id -1
+      :kind :product
+      :name name}]
 
-      (add-service-ids -1 service-ids)
+    (add-service-ids -1 service-ids)
 
-      (mapcat
-        (fn [id v]
-          (variant-txs -1 id v))
+    (mapcat
+      (fn [id v]
+        (create-variant-tx -1 id v))
 
-        ; generate temp ids for each variant
-        (iterate dec -2)
-        variants))))
-
-(defn create-variant [product-id variant]
-  {:pre [(valid-variant? variant)]}
-  (transact!
-    (variant-txs product-id variant)))
+      ; generate temp ids for each variant
+      (iterate dec -2)
+      variants)))
+(def create-product (transact!-with create-product-tx))
