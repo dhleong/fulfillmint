@@ -1,5 +1,5 @@
 (ns fulfillmint.runner
-    (:require [doo.runner :refer-macros [doo-tests]]
-              [fulfillmint.core-test]))
+  (:require [doo.runner :refer-macros [doo-tests doo-all-tests]]
+            [fulfillmint.data.db-test]))
 
-(doo-tests 'fulfillmint.core-test)
+(doo-all-tests #"fulfillmint\..*-test")

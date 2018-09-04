@@ -46,6 +46,13 @@
 
   ;; :repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
 
+  :aliases {"build" ["with-profile" "+prod,-dev" "do"
+                     ["clean"]
+                     ["cljsbuild" "once" "min"]
+                     ["less" "once"]]
+            "test" ["do" "test"
+                         ["doo" "chrome-headless" "test" "once"]]}
+
   :profiles
   {:dev
    {:dependencies [[binaryage/devtools "0.9.10"]
