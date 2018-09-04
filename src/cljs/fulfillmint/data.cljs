@@ -40,7 +40,8 @@
 ;; a collection of {:name,:default?,:group,:parts,:service-ids} and
 ;; :parts is map of <part-id> -> units
 ;;
-;; [:create-variant <product-id> {:parts}]
+;; [:create-variant <product-id> <variant>]
+;; where `variant` is the same format as for `:create-product
 ;;
 ;; [:create-pending-order {:service,:service-id,:link,:buyer-name,:products}]
 ;; where :products is a sequence of:

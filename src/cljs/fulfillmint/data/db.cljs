@@ -116,6 +116,38 @@
       [:db/add eid :service-ids id])
     service-ids))
 
+(defn- variant-txs
+  "Generate the sequence of transact statements
+   used to add the variant `v` to the given `product-id`.
+   `product-id` may be a lookup ref or a temporary eid.
+   If `variant-id` is not provided, the temporary eid `-1`
+   will be used for it."
+  ([product-id v]
+   (variant-txs provider-id -1 v))
+  ([product-id variant-id v]
+   (cons
+     (->> {:db/id variant-id
+           :kind :variant
+           :name (:name v)
+
+           :variant/product product-id
+           :variant/default? (boolean
+                               (:default? v))
+           :variant/group (:group v)
+           :variant/parts
+           (map (fn [[part-id units]]
+                  {:kind :part-use
+                   :part-use/part part-id
+                   :part-use/units units})
+
+                (:parts v))}
+
+          ; remove nil values
+          (filter second)
+          (into {}))
+
+     (add-service-ids id (:service-ids v)))))
+
 (defn create-product [{:keys [name variants service-ids]}]
   {:pre [(string? name)
          (every? valid-variant? variants)]}
@@ -127,30 +159,15 @@
 
       (add-service-ids -1 service-ids)
 
-      (mapcat (fn [id v]
-                (cons
-                  (->> {:db/id id
-                        :kind :variant
-                        :name (:name v)
+      (mapcat
+        (fn [id v]
+          (variant-txs -1 id v))
 
-                        :variant/product -1
-                        :variant/default? (boolean
-                                            (:default? v))
-                        :variant/group (:group v)
-                        :variant/parts
-                        (map (fn [[part-id units]]
-                               {:kind :part-use
-                                :part-use/part part-id
-                                :part-use/units units})
+        ; generate temp ids for each variant
+        (iterate dec -2)
+        variants))))
 
-                             (:parts v))}
-
-                       ; remove nil values
-                       (filter second)
-                       (into {}))
-
-                  (add-service-ids id (:service-ids v))))
-
-              ; generate temp ids for each variant
-              (iterate dec -2)
-              variants))))
+(defn create-variant [product-id variant]
+  {:pre [(valid-variant? variant)]}
+  (transact!
+    (variant-txs product-id variant)))
