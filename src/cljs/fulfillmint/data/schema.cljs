@@ -6,9 +6,9 @@
 (def shared-schema
   {:name {:db/cardinality :db.cardinality/one
           :db/doc "Something's name"}
-   :service-id {:db/cardinality :db.cardinality/one
-                :db/unique :db.unique/identity
-                :db/doc "Something's service ID"}
+   :service-ids {:db/cardinality :db.cardinality/many
+                 :db/unique :db.unique/identity
+                 :db/doc "Something's service IDs (it might have more than one)"}
    :kind {:db/cardinality :db.cardinality/one
           :db/doc "The kind of entity"}
    })

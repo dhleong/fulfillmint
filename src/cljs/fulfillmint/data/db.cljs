@@ -45,6 +45,7 @@
 (def all-parts (all-of-kind :part))
 (def all-products (all-of-kind :product))
 (def all-variants (all-of-kind :variant))
+(def all-orders (all-of-kind :order))
 
 (defn part-uses-for [db product-id]
   ; NOTE this ignores variants right now
@@ -89,9 +90,8 @@
 (defn create-pending-order
   [{:keys [service-id link buyer-name products]}]
   (transact!
-    [{:db/id -1
-      :kind :order
-      :service-id service-id
+    [{:kind :order
+      :service-ids service-id
       :link link
       :buyer-name buyer-name
       :pending? true
@@ -99,42 +99,58 @@
       :order/items
       (map
         (fn [p]
-          {:order-item/order -1
-           :order-item/product [:service-id (:id p)]
-           :order-item/variants (map #(vector :service-id %)
+          {:kind :order-item
+           :order-item/product [:service-ids (:service-id p)]
+           :order-item/variants (mapv #(vector :service-ids %)
                                      (:variants p))
            :quantity (:quantity p)})
         products)}]))
+
+(defn- add-service-ids
+  "For whatever reason, datascript doesn't seem to like it when
+   we include the service-ids list in the map form, so we manually
+   add them one at a time."
+  [eid service-ids]
+  (map
+    (fn [id]
+      [:db/add eid :service-ids id])
+    service-ids))
 
 (defn create-product [{:keys [name variants service-ids]}]
   {:pre [(string? name)
          (every? valid-variant? variants)]}
   (transact!
-    (cons
-      {:db/id -1
-       :kind :product
-       :service-id service-ids
-       :name name}
+    (concat
+      [{:db/id -1
+        :kind :product
+        :name name}]
 
-      (map (fn [v]
-             (->> {:kind :variant
-                   :name (:name v)
-                   :service-id (:service-ids v)
+      (add-service-ids -1 service-ids)
 
-                   :variant/product -1
-                   :variant/default? (boolean
-                                       (:default? v))
-                   :variant/group (:group v)
-                   :variant/parts
-                   (map (fn [[part-id units]]
-                          {:kind :part-use
-                           ;; :part-use/variant variant-id
-                           :part-use/part part-id
-                           :part-use/units units})
+      (mapcat (fn [id v]
+                (cons
+                  (->> {:db/id id
+                        :kind :variant
+                        :name (:name v)
 
-                        (:parts v))}
+                        :variant/product -1
+                        :variant/default? (boolean
+                                            (:default? v))
+                        :variant/group (:group v)
+                        :variant/parts
+                        (map (fn [[part-id units]]
+                               {:kind :part-use
+                                :part-use/part part-id
+                                :part-use/units units})
 
-                  ; remove nil values
-                  (filter second)
-                  (into {})))
-           variants))))
+                             (:parts v))}
+
+                       ; remove nil values
+                       (filter second)
+                       (into {}))
+
+                  (add-service-ids id (:service-ids v))))
+
+              ; generate temp ids for each variant
+              (iterate dec -2)
+              variants))))

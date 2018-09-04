@@ -44,6 +44,6 @@
 ;;
 ;; [:create-pending-order {:service,:service-id,:link,:buyer-name,:products}]
 ;; where :products is a sequence of:
-;;  {:id <service-id>
+;;  {:service-id <service-id>
 ;;   :variants [<variant-service-id>...]
 ;;   :quantity <number>}
