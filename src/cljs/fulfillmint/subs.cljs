@@ -4,3 +4,10 @@
 ; ======= Core ============================================
 
 (reg-sub :page :page)
+
+(reg-sub
+  :new?
+  :<- [:parts]
+  :<- [:products]
+  (fn [things _]
+    (not (every? seq things))))

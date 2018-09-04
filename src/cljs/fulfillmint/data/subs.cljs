@@ -14,3 +14,9 @@
                 (-> p
                     (dissoc :db/id)
                     (assoc :id (:db/id p))))))))
+
+(reg-sub
+  :products
+  :<- [::db]
+  (fn [db _]
+    (->> (db/all-products db))))

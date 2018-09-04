@@ -11,14 +11,20 @@
   (defroute "/" []
     (navigate! :home))
 
-  (defroute "/products" []
-    (navigate! :products))
+  (defroute "/parts" []
+    (navigate! :parts))
+
+  (defroute "/parts/new" []
+    (navigate! :new-part))
+
+  (defroute "/parts/:id" [id]
+    (navigate! :part id))
 
   (defroute "/products/new" []
-    (navigate! :product-builder))
+    (navigate! :new-product))
 
   (defroute "/products/:id" [id]
-    (navigate! :product (keyword id)))
+    (navigate! :product id))
 
   (defroute "/providers/:provider-id/config" [provider-id]
     (navigate! :provider-config (keyword provider-id)))

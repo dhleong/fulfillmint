@@ -5,13 +5,16 @@
 
             ; views:
             [fulfillmint.views.home :as home]
+            [fulfillmint.views.new-part :as new-part]
+            [fulfillmint.views.new-product :as new-product]
             ))
 
 ;; main
 
 (def pages
   {:home #'home/home
-   })
+   :new-part #'new-part/view
+   :new-product #'new-product/view})
 
 (defn main []
   [:<>
