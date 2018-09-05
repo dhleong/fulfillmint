@@ -51,7 +51,7 @@
    ])
 
 (defn home []
-  (r/with-let [tutorial? (atom (<sub [:new?]))]
+  (r/with-let [tutorial? (r/atom (<sub [:new?]))]
     (if @tutorial?
       [new-user-home tutorial?]
 
