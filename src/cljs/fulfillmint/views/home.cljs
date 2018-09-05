@@ -13,6 +13,7 @@
    [:h4 "Welcome back to Fulfillmint!"]
    [:ul
     (for [{n :name k :key} (services/get-services)]
+      ^{:key k}
       [:li [link {:href (str "/services/" (name k) "/config")}
             "Configure " n]])]
    ])
