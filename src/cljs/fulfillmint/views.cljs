@@ -1,6 +1,7 @@
 (ns fulfillmint.views
   (:require [re-frame.core :as re-frame]
             [fulfillmint.subs :as subs]
+            [fulfillmint.views.error-boundary :refer [error-boundary]]
             [fulfillmint.views.router :refer [router]]
 
             ; views:
@@ -18,5 +19,6 @@
 
 (defn main []
   [:<>
-   [router pages]])
+   [error-boundary
+    [router pages]]])
 
