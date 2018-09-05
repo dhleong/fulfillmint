@@ -4,6 +4,7 @@
   (:require [clojure.string :as str]
             [reagent.core :as r]
             [reagent-forms.core :refer [bind-fields]]
+            [fulfillmint.service :as services]
             [fulfillmint.service.util :refer [->service-id]]
             [fulfillmint.util :refer [<sub >evt vec-dissoc]
              :refer-macros [fn-click]]
@@ -45,8 +46,8 @@
   [:div.form-part
    [:select {:field :list
              :id (conj id :service)}
-    ; TODO build dynamically from services
-    [:option {:key :etsy} "Etsy"]]
+    (for [{n :name k :key} (services/get-services)]
+      [:option {:key k} n])]
    [:input {:field :text
             :id (conj id :id)
             :autoComplete false

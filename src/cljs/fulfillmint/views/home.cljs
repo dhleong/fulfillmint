@@ -2,6 +2,7 @@
       :doc "views.home"}
   fulfillmint.views.home
   (:require [reagent.core :as r]
+            [fulfillmint.service :as services]
             [fulfillmint.util :refer [<sub >evt click>reset! fn-click]]
             [fulfillmint.views.new-part :as new-part]
             [fulfillmint.views.new-product :as new-product]
@@ -10,7 +11,11 @@
 (defn existing-user-home []
   [:<>
    [:h4 "Welcome back to Fulfillmint!"]
-   "TODO"])
+   [:ul
+    (for [{n :name k :key} (services/get-services)]
+      [:li [link {:href (str "/services/" (name k) "/config")}
+            "Configure " n]])]
+   ])
 
 (defn new-user-home [tutorial?]
   [:<>

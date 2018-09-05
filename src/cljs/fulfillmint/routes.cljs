@@ -26,8 +26,8 @@
   (defroute "/products/:id" [id]
     (navigate! :product id))
 
-  (defroute "/providers/:provider-id/config" [provider-id]
-    (navigate! :provider-config (keyword provider-id)))
+  (defroute "/services/:service-key/config" [service-key]
+    (navigate! :service-config (keyword service-key)))
 
   ;; --------------------
   (hook-browser-navigation!))
