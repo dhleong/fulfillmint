@@ -50,7 +50,7 @@
       [:option {:key k} n])]
    [:input {:field :text
             :id (conj id :id)
-            :autoComplete false
+            :autoComplete 'off
             :placeholder "ID or Serial Number"}]])
 
 (defn- service-ids-form [form kind path]
