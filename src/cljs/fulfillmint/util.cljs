@@ -7,6 +7,14 @@
 (def <sub (comp deref subscribe))
 (def >evt dispatch)
 
+(defn vec-dissoc
+  "Remove the nth item from a vector"
+  [v n]
+  (vec
+    (concat
+      (subvec v 0 n)
+      (subvec v (inc n)))))
+
 (def is-ios?
   (memoize
     (fn is-ios? []

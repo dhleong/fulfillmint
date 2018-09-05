@@ -7,12 +7,17 @@
 
                  [kibu/pushy "0.3.8"]
 
+                 ; data querying and persistence
                  [datascript "0.16.6"]
                  [datascript-transit "0.2.2"
                   :exclusions [com.cognitect/transit-cljs]]
                  [com.cognitect/transit-cljs "0.8.256"]
 
                  [alandipert/storage-atom "2.0.1"]
+
+                 ; simpler forms
+                 [reagent-forms "0.5.42"]
+
                  ]
 
   :plugins [[lein-cljsbuild "1.1.7"]
