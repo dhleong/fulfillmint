@@ -87,9 +87,9 @@
          (not (empty? name))]}
   [{:kind :part
     :name name
-    :quantity quantity
-    :unit unit
-    :supplier supplier}])
+    :quantity (or quantity 0) ; if nil is passed, :or above fails
+    :unit (or unit "things")
+    :supplier (or supplier "")}])
 (def create-part (transact!-with create-part-tx))
 
 (defn create-pending-order-tx

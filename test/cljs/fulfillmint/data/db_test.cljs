@@ -29,7 +29,19 @@
         (is (contains? (->> all-parts
                             (map #(select-keys % [:name :unit :db/id]))
                             (into #{}))
-                       {:db/id 2 :name "Stabilizer" :unit "things"}))))))
+                       {:db/id 2 :name "Stabilizer" :unit "things"}))))
+
+    (testing "it handles nil quantity"
+      (let [db (-> db (d/db-with (db/create-part-tx
+                                   {:name "Stabilizer"
+                                    :quantity nil})))
+            all-parts (db/all-parts db)]
+        (is (= 2 (count all-parts)))
+        (is (contains? (->> all-parts
+                            (map #(select-keys % [:name :quantity]))
+                            (into #{}))
+                       {:name "Stabilizer" :quantity 0}))))
+    ))
 
 (deftest create-product-test
   (let [db (-> (empty-db)
