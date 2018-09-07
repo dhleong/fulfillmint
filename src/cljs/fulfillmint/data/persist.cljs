@@ -22,10 +22,7 @@
    Returns the same `conn`"
   [conn]
 
-  (when-not goog.DEBUG
-    ; NOTE: currently disabled in debug mode, since
-    ; we're experimenting heavily with the schema
-    (d/listen! conn :save (partial p/write-db conn)))
+  (d/listen! conn :save #(p/write-db persister conn))
 
   conn)
 

@@ -12,3 +12,4 @@ out
 .repl
 nashorn_code_cache
 .planck_cache
+now.json

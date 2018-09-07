@@ -140,12 +140,13 @@
                                (:default? v))
            :variant/group (:group v)
            :variant/parts
-           (map (fn [[part-id units]]
-                  {:kind :part-use
-                   :part-use/part part-id
-                   :part-use/units units})
-
-                (:parts v))}
+           (->> v
+                :parts
+                (filter second)
+                (map (fn [[part-id units]]
+                       {:kind :part-use
+                        :part-use/part part-id
+                        :part-use/units units})))}
 
           ; remove nil values
           (filter second)
