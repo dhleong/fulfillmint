@@ -17,3 +17,8 @@
   (fn-traced [db page-spec]
     (assoc db :page page-spec)))
 
+(reg-event-db
+  :put-search
+  [trim-v]
+  (fn-traced [db [sub query]]
+    (assoc-in db [:searches sub] query)))

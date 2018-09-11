@@ -4,19 +4,20 @@
   (:require [re-frame.core :refer [reg-sub subscribe]]
             [fulfillmint.data.db :as db]))
 
-(reg-sub
-  :parts
-  :<- [::db]
-  (fn [db _]
-    (println "running :parts")
-    (->> (db/all-parts db)
-         (map (fn [p]
-                (-> p
-                    (dissoc :db/id)
-                    (assoc :id (:db/id p))))))))
+(defn- insert-id [item]
+  (-> item
+      (dissoc :db/id)
+      (assoc :id (:db/id item))))
 
-(reg-sub
-  :products
-  :<- [::db]
-  (fn [db _]
-    (->> (db/all-products db))))
+(defn reg-all-of-kind-sub
+  [sub-name query-fn]
+  (reg-sub
+    sub-name
+    :<- [::db]
+    (fn [db _]
+      (->> (query-fn db)
+           (map insert-id)))))
+
+(reg-all-of-kind-sub :orders db/all-orders)
+(reg-all-of-kind-sub :parts db/all-parts)
+(reg-all-of-kind-sub :products db/all-products)

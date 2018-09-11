@@ -8,8 +8,7 @@
             [fulfillmint.service.util :refer [->service-id]]
             [fulfillmint.util :refer [<sub >evt vec-dissoc]
              :refer-macros [fn-click]]
-            [fulfillmint.views.widgets :refer-macros [icon]]
-            ))
+            [fulfillmint.views.widgets :refer-macros [icon]]))
 
 (defn- update-service-ids
   [entity]

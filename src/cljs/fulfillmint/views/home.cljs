@@ -11,6 +11,15 @@
 (defn existing-user-home []
   [:<>
    [:h4 "Welcome back to Fulfillmint!"]
+   [:h5 "Sections"]
+   [:ul
+    [:li [link {:href "/orders"}
+          "Orders"]]
+    [:li [link {:href "/parts"}
+          "Parts"]]
+    [:li [link {:href "/products"}
+          "Products"]]]
+   [:h5 "Services"]
    [:ul
     (for [{n :name k :key} (services/get-services)]
       ^{:key k}

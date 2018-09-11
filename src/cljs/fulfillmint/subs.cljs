@@ -1,5 +1,6 @@
 (ns fulfillmint.subs
-  (:require [re-frame.core :refer [reg-sub subscribe]]))
+  (:require [clojure.string :as str]
+            [re-frame.core :refer [reg-sub subscribe]]))
 
 ; ======= Core ============================================
 
@@ -11,3 +12,22 @@
   :<- [:products]
   (fn [things _]
     (not (every? seq things))))
+
+
+; ======= searchable ======================================
+
+(reg-sub :searches :searches)
+
+(reg-sub
+  :search
+  (fn [[_ query-sub]]
+    [(subscribe query-sub)
+     (subscribe [:searches])])
+  (fn [[inputs searches] [_ query-sub]]
+    (let [query (get searches query-sub)]
+      (cond->> inputs
+        (not (str/blank? query))
+        (filter (fn [r]
+                  (str/includes?
+                    (str/lower-case (:name r))
+                    (str/lower-case query))))))))

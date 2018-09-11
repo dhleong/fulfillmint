@@ -3,4 +3,6 @@
 
 (def default-db
   {:page [:home]
-   ::data/state data/initial-db-state})
+   ::data/state data/initial-db-state
+
+   :searches {}})
