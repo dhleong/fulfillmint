@@ -43,7 +43,7 @@
                        {:name "Stabilizer" :quantity 0}))))
     ))
 
-(deftest create-product-test
+(deftest product-test
   (let [db (-> (empty-db)
                (d/db-with (db/create-part-tx
                             {:name "Compression Coil Catalyzer"
@@ -55,7 +55,25 @@
                              [{:name "Serenity"
                                :service-ids ["firefly/serenity"]
                                :default? true
+                               :parts {1 1}}]}))
+               (d/db-with (db/create-product-tx
+                            {:name "Captain"
+                             :service-ids ["firefly/captain"]
+                             :variants
+                             [{:name "Mal Reynolds"
+                               :service-ids ["firefly/mreynolds"]
+                               :default? true
                                :parts {1 1}}]})))]
     (testing "create-product works"
       (let [all-products (db/all-products db)]
-        (is (= 1 (count all-products)))))))
+        (is (= 2 (count all-products)))))
+
+    (testing "variants-for-product query"
+      (let [variants (db/variants-for-product db [:service-ids "firefly/03-k64"])]
+        (is (= ["Serenity"]
+               (->> variants
+                    (map :name)))))
+      (let [variants (db/variants-for-product db [:service-ids "firefly/captain"])]
+        (is (= ["Mal Reynolds"]
+               (->> variants
+                    (map :name))))))))

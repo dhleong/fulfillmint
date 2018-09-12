@@ -9,7 +9,7 @@
       (dissoc :db/id)
       (assoc :id (:db/id item))))
 
-(defn reg-all-of-kind-sub
+(defn reg-all-of-query-sub
   [sub-name query-fn]
   (reg-sub
     sub-name
@@ -18,6 +18,14 @@
       (->> (query-fn db)
            (map insert-id)))))
 
-(reg-all-of-kind-sub :orders db/all-orders)
-(reg-all-of-kind-sub :parts db/all-parts)
-(reg-all-of-kind-sub :products db/all-products)
+(reg-all-of-query-sub :orders db/all-orders)
+(reg-all-of-query-sub :parts db/all-parts)
+(reg-all-of-query-sub :products db/all-products)
+
+(reg-sub
+  :variants-of
+  :<- [::db]
+  (fn [db [_ product-id]]
+    (->> (db/variants-for-product db (or (:id product-id)
+                                         product-id))
+         (map insert-id))))

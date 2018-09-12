@@ -8,7 +8,10 @@
             [fulfillmint.service.util :refer [->service-id]]
             [fulfillmint.util :refer [<sub >evt vec-dissoc]
              :refer-macros [fn-click]]
-            [fulfillmint.views.widgets :refer-macros [icon]]))
+            [fulfillmint.views.widgets :refer-macros [icon]]
+            [fulfillmint.views.widgets.typeahead :refer [typeahead]]
+            [fulfillmint.views.widgets.service-id-entry
+             :refer [service-id-entry]]))
 
 (defn- update-service-ids
   [entity]
@@ -41,17 +44,6 @@
       (update :variants (partial map clean-variant))
       ))
 
-(defn- service-ids-entry [id]
-  [:div.form-part
-   [:select {:field :list
-             :id (conj id :service)}
-    (for [{n :name k :key} (services/get-services)]
-      [:option {:key k} n])]
-   [:input {:field :text
-            :id (conj id :id)
-            :autoComplete 'off
-            :placeholder "ID or Serial Number"}]])
-
 (defn- service-ids-form [form kind path]
   (let [entries (->> (get-in @form path)
                      (filter :name)
@@ -62,7 +54,8 @@
      (for [i (range (inc entries))]
        ^{:key i}
        [bind-fields
-        (service-ids-entry (conj path i))
+        (service-id-entry {:id (conj path i)
+                           :placeholder "ID or Serial Number"})
         form])
 
      ]))
@@ -70,28 +63,20 @@
 (defn- part-form [form path]
   [:div.part-entry
    [bind-fields
-    [:div.form-part {:field :typeahead
-                     :id (conj path :part)
-                     :data-source (fn [input]
-                                    (let [match (str/lower-case input)]
-                                      (->> (<sub [:parts])
-                                           (filter
-                                             #(str/includes? (str/lower-case
-                                                               (:name %))
-                                                             match))
-                                           (map #(vector (:name %) %)))))
-                     :in-fn :name
-                     :out-fn second
-                     :result-fn first}]
+    (typeahead
+      :id (conj path :part)
+      :placeholder "Part Name"
+      :query-sub [:parts])
     form]
 
    (when-let [p (get-in @form (conj path :part))]
-     [bind-fields
-      [:div.form-part
-       [:input {:field :numeric
-                :id (conj path :quantity)
-                :placeholder (str "# " (:unit p) " per product")}]]
-      form])])
+     (when (:name p)
+       [bind-fields
+        [:div.form-part
+         [:input {:field :numeric
+                  :id (conj path :quantity)
+                  :placeholder (str "# " (:unit p) " per product")}]]
+        form]))])
 
 (defn- variant-form [form index]
   [:<>
@@ -122,7 +107,7 @@
 
    (let [parts-count (->> (get-in @form [:variants index ::parts])
                           vals
-                          (keep :part)
+                          (keep (comp :name :part))
                           count)]
      [:div
       "Add parts:"

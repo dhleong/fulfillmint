@@ -53,6 +53,15 @@
 (def all-variants (all-of-kind :variant))
 (def all-orders (all-of-kind :order))
 
+(defn variants-for-product [db product-id]
+  (pull-many-for
+    db
+    '[:find [?variant ...]
+      :in $, ?product-id
+      :where
+      [?variant :variant/product ?product-id]]
+    product-id))
+
 (defn part-uses-for [db product-id]
   ; NOTE this ignores variants right now
   ; and is mostly just for experimenting with
