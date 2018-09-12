@@ -1,0 +1,39 @@
+{
+  "name": "fulfillmint",
+  "version": "1.0.0",
+  "description": "Server component for Fulfillmint",
+  "main": "index.js",
+  "engines": {
+    "node": "8.11.3"
+  },
+  "now": {
+    "alias": "fulfillmint",
+    "env": {
+      "ETSY_CLIENT": "@etsy-client",
+      "ETSY_SECRET": "@etsy-secret",
+      "URL_AUTH": "https://fulfillmint.now.sh",
+      "URL_RETURN": "https://dhleong.github.io/fulfillmint"
+    }
+  },
+  "scripts": {
+    "start": "node index.js",
+    "deploy": "now --public && now alias",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dhleong/fulfillmint.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dhleong/fulfillmint/issues"
+  },
+  "homepage": "https://github.com/dhleong/fulfillmint#readme",
+  "dependencies": {
+    "koa": "^2.5.2",
+    "koa-router": "^7.4.0",
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.5"
+  }
+}
