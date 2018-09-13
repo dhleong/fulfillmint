@@ -44,7 +44,9 @@
   [f]
   (fn transactor [conn & args]
     (println "transact! " f args)
-    (d/transact! conn (apply f args))))
+    (let [tx (apply f args)]
+      (println "-> " tx)
+      (d/transact! conn tx))))
 
 ; ======= Accessors =======================================
 
@@ -101,24 +103,27 @@
     :supplier (or supplier "")}])
 (def create-part (transact!-with create-part-tx))
 
-(defn create-pending-order-tx
-  [{:keys [service-id link buyer-name products]}]
+(defn create-order-tx
+  [{:keys [service-id link buyer-name products pending?]
+    :or {pending? false}}]
   [{:kind :order
     :service-ids service-id
-    :link link
+    :link (or link "")
     :buyer-name buyer-name
-    :pending? true
+    :pending? pending?
 
     :order/items
     (map
       (fn [p]
         {:kind :order-item
-         :order-item/product [:service-ids (:service-id p)]
-         :order-item/variants (mapv #(vector :service-ids %)
+         :order-item/product (or (:id p)
+                                 [:service-ids (:service-id p)])
+         :order-item/variants (mapv #(or (:id %)
+                                         [:service-ids %])
                                     (:variants p))
-         :quantity (:quantity p)})
+         :quantity (:quantity p 1)})
       products)}])
-(def create-pending-order (transact!-with create-pending-order-tx))
+(def create-order (transact!-with create-order-tx))
 
 (defn- add-service-ids
   "For whatever reason, datascript doesn't seem to like it when

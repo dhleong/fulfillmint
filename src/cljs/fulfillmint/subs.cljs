@@ -23,11 +23,13 @@
   (fn [[_ query-sub]]
     [(subscribe query-sub)
      (subscribe [:searches])])
-  (fn [[inputs searches] [_ query-sub]]
-    (let [query (get searches query-sub)]
+  (fn [[inputs searches] [_ query-sub opts]]
+    (let [{:keys [->searchable]
+           :or {->searchable :name}} opts
+          query (get searches query-sub)]
       (cond->> inputs
         (not (str/blank? query))
         (filter (fn [r]
                   (str/includes?
-                    (str/lower-case (:name r))
+                    (str/lower-case (->searchable r))
                     (str/lower-case query))))))))

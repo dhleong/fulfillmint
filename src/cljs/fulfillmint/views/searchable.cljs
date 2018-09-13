@@ -7,7 +7,9 @@
             [fulfillmint.util :refer [<sub >evt]]
             [fulfillmint.views.widgets :refer [link]]))
 
-(defn searchable [& {:keys [sub ->url]}]
+(defn searchable [& {:keys [sub ->label ->url]
+                     :or {->label :name}
+                     :as opts}]
   [:div.searchable
    [bind-fields
     [:div.search
@@ -18,7 +20,7 @@
      :save! #(>evt [:put-search sub %2])}]
 
    [:div.results
-    (if-let [results (seq (<sub [:search sub]))]
+    (if-let [results (seq (<sub [:search sub opts]))]
       (for [r results]
         ^{:key (:id r)}
         [:div.result
@@ -26,7 +28,7 @@
            (log/warn "No :id for " r))
 
          [link {:href (->url r)}
-          (:name r)]])
+          (->label r)]])
 
       (when-not (str/blank? (get (<sub [:searches]) sub))
         [:div.no-results

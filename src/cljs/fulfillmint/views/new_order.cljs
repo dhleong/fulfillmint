@@ -5,6 +5,7 @@
   (:require [clojure.string :as str]
             [reagent.core :as r]
             [reagent-forms.core :refer [bind-fields]]
+            [fulfillmint.service.util :refer [->service-id]]
             [fulfillmint.util :refer [<sub >evt click>reset! fn-click]]
             [fulfillmint.views.widgets :refer [link]]
             [fulfillmint.views.widgets.typeahead :refer [typeahead]]
@@ -43,6 +44,39 @@
             [product-variant-form form (conj path i) p])
           [:hr]])))])
 
+(defn clean-order [f]
+  (let [service-id-raw (:id (::service-id f))]
+    (-> f
+        (dissoc ::service-id)
+        (update :products (partial
+                            map
+                            (fn [p]
+                              (-> p
+                                  (dissoc :product)
+                                  (assoc :id (:id (:product p)))
+                                  (update :variants vals)))))
+
+        (cond->
+          ; insert a parsed :service-id if possible
+          (not (str/blank? service-id-raw))
+          (assoc :service-id
+                 (->service-id
+                   (:service (::service-id f))
+                   service-id-raw))))))
+
+(defn submit-form [just-added f]
+  (let [f (clean-order f)
+        _ (println f)
+
+        invalid? (or
+                   (not (:service-id f))
+                   (empty? (:products f))
+                   (str/blank? (get f :buyer-name)))]
+    (when-not invalid?
+      (log "SUBMIT " f)
+      (>evt [:create-order f])
+      (reset! just-added f))))
+
 (defn view []
   (r/with-let [form (r/atom {:products []})
                just-added (r/atom nil)]
@@ -53,11 +87,14 @@
        [:p "Just added: " (:service-id added)])
 
      [:form {:on-submit (fn-click
-                          (log @form))}
+                          (submit-form just-added @form))}
       [bind-fields
        [:<>
         (service-id-entry {:id [::service-id]
-                           :placeholder "Order ID"})
+                           :placeholder "Order ID"
+                           :validator (fn [{:keys [id service]}]
+                                        (when (str/blank? id)
+                                          ["error"]))})
 
         [:div.form-part
          [:input {:field :text
@@ -67,7 +104,10 @@
         [:div.form-part
          [:input {:field :text
                   :id :buyer-name
-                  :placeholder "Buyer name"}]]]
+                  :placeholder "Buyer name"
+                  :validator (fn [n]
+                               (when (str/blank? n)
+                                 ["error"]))}]]]
 
        form]
 

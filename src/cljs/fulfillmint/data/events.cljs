@@ -7,15 +7,22 @@
             [fulfillmint.data.db :as db]
             [fulfillmint.data.compat :refer [reg-event-conn]]))
 
+(defn- reg-create-event-conn
+  [event-name f]
+  (reg-event-conn
+    event-name
+    [trim-v]
+    (fn [conn [thing]]
+      (f conn thing))))
 
-(reg-event-conn
+(reg-create-event-conn
+  :create-order
+  db/create-order)
+
+(reg-create-event-conn
   :create-part
-  [trim-v]
-  (fn [conn [part]]
-    (db/create-part conn part)))
+  db/create-part)
 
-(reg-event-conn
+(reg-create-event-conn
   :create-product
-  [trim-v]
-  (fn [conn [product]]
-    (db/create-product conn product)))
+  db/create-product)

@@ -6,6 +6,9 @@
             [fulfillmint.views.searchable :refer [searchable]]
             [fulfillmint.views.widgets :refer [link]]))
 
+(defn order->searchable [o]
+  (str (first (:service-ids o)) ": " (:buyer-name o)))
+
 (defn view []
   [:<>
    [:h4 "Orders"]
@@ -14,5 +17,7 @@
      "Record a new Order"]]
    [searchable
     :sub [:orders]
+    :->searchable order->searchable
+    :->label order->searchable
     :->url (fn [p]
              (str "/orders/" (:id p)))]])

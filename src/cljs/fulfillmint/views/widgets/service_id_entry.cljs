@@ -3,7 +3,7 @@
   fulfillmint.views.widgets.service-id-entry
   (:require [fulfillmint.service :as services]))
 
-(defn- service-id-entry [{:keys [id placeholder]}]
+(defn- service-id-entry [{:keys [id placeholder validator]}]
   [:div.form-part
    [:select {:field :list
              :id (conj id :service)}
@@ -12,5 +12,8 @@
    [:input {:field :text
             :id (conj id :id)
             :autoComplete 'off
-            :placeholder placeholder}]])
+            :placeholder placeholder
+            :validator (when validator
+                         (fn [doc]
+                           (validator (get-in doc id))))}]])
 
