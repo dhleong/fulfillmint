@@ -108,15 +108,12 @@ router.get('/oauth-callback', async ctx => {
 router.post('/proxy', corsMiddleware, bodyParser(), async ctx => {
     const { body } = ctx.request;
 
-    const m = {
+    const resp = await withAuth({
         method: body.method,
         url: URLS.api + body.url,
         token: body['oauth-token'],
         tokenSecret: body['oauth-secret'],
-    };
-    console.log(m);
-
-    const resp = await withAuth(m);
+    });
 
     ctx.response.type = 'application/json';
     ctx.body = resp;
