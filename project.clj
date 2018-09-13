@@ -6,6 +6,7 @@
                  [secretary "1.2.3"]
 
                  [kibu/pushy "0.3.8"]
+                 [cljs-ajax "0.7.3"]
 
                  ; data querying and persistence
                  [datascript "0.16.6"]

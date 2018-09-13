@@ -31,7 +31,9 @@
   },
   "homepage": "https://github.com/dhleong/fulfillmint#readme",
   "dependencies": {
+    "@koa/cors": "^2.2.2",
     "koa": "^2.5.2",
+    "koa-bodyparser": "^4.2.1",
     "koa-router": "^7.4.0",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5"

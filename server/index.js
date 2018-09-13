@@ -1,17 +1,21 @@
 const Koa = require('koa');
 const Router = require('koa-router');
+const bodyParser = require('koa-bodyparser');
+const cors = require('@koa/cors');
 
 const qs = require('querystring');
 const rp = require('request-promise-native');
 
 const SCOPE = "email_r listings_r transactions_r";
 
+const RETURN_ORIGIN = (process.env.URL_RETURN || "http://localhost:3449");
+
 const oauthCallbackURI = (process.env.URL_AUTH || "http://localhost:3000") +
     "/oauth-callback";
-const oauthReturnURI = (process.env.URL_RETURN || "http://localhost:3449") +
-    "/oauth.html";
+const oauthReturnURI = RETURN_ORIGIN + "/oauth.html";
 
 const URLS = {
+    api: "https://openapi.etsy.com/v2",
     request: "https://openapi.etsy.com/v2/oauth/request_token",
     token: "https://openapi.etsy.com/v2/oauth/access_token",
 };
@@ -31,7 +35,7 @@ function withAuth(requestData) {
 
     return rp({
         url: requestData.url,
-        method: 'POST',
+        method: requestData.method || 'POST',
         oauth: oauth,
         form: requestData.form,
     });
@@ -39,6 +43,16 @@ function withAuth(requestData) {
 
 const app = new Koa();
 const router = new Router();
+
+const corsMiddleware = cors({
+    origin: ctx => {
+        const origin = ctx.get('Origin');
+        if (origin === RETURN_ORIGIN) {
+            return RETURN_ORIGIN;
+        }
+    },
+    allowMethods: "POST",
+});
 
 // this is garbage
 const tempTokenSecrets = {};
@@ -91,7 +105,25 @@ router.get('/oauth-callback', async ctx => {
     ctx.redirect(oauthReturnURI + "?" + qs.stringify(info));
 });
 
-app.use(router.routes())
+router.post('/proxy', corsMiddleware, bodyParser(), async ctx => {
+    const { body } = ctx.request;
+
+    const m = {
+        method: body.method,
+        url: URLS.api + body.url,
+        token: body['oauth-token'],
+        tokenSecret: body['oauth-secret'],
+    };
+    console.log(m);
+
+    const resp = await withAuth(m);
+
+    ctx.response.type = 'application/json';
+    ctx.body = resp;
+});
+
+app.use(corsMiddleware)
+    .use(router.routes())
     .use(router.allowedMethods())
     .listen(3000, () => {
         console.log("Ready on 3000");

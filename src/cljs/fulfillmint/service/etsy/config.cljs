@@ -4,12 +4,11 @@
   (:require-macros [fulfillmint.util.log :refer [log]])
   (:require [clojure.string :as str]
             [reagent.core :as r]
-            [alandipert.storage-atom :refer [local-storage]]
+            [fulfillmint.service.etsy.api :refer [proxy-root]]
+            [fulfillmint.service.etsy.creds :refer [oauth-storage]]
             [fulfillmint.util :refer [fn-click]]))
 
-(def ^:private login-url (if goog.DEBUG
-                           "http://localhost:3000/oauth"
-                           "http://fulfillmint.now.sh/oauth"))
+(def ^:private login-url (str proxy-root "/oauth"))
 
 (def ^:private login-window-opts (->> {:resizable 1
                                        :scrollbars 1
@@ -18,8 +17,6 @@
                                       (map (fn [[k v]]
                                              (str (name k) "=" v)))
                                       (str/join ",")))
-
-(defonce oauth-storage (local-storage (r/atom nil) :etsy-oauth))
 
 (defn ^:export on-login-result [search-str]
   (log "on-login-result" search-str)
