@@ -101,6 +101,28 @@
                :part part
                :needed used}))))
 
+(defn variants-for-orders [db]
+  (->> (d/q
+         '[:find (pull ?variants [*]) (sum ?quantity)
+           :with ?order-items
+           :where
+           [?order :order/complete? false]
+           [?order :order/pending? false]
+           [?order :order/items ?order-items]
+           [?order-items :order-item/variants ?variants]
+           [?order-items :quantity ?quantity]
+           [?variants :variant/parts ?part-use]
+           ]
+         db)
+       (map (fn [[variant ordered]]
+              {:db/id (:db/id variant)
+               :variant variant
+               :parts (->> variant
+                           :variant/parts
+                           (map (comp :db/id :part-use/part))
+                           (into #{}))
+               :ordered ordered}))))
+
 (defn part-uses-for-part [db part-id]
   (->> (d/q
          '[:find (pull ?product [*]) (pull ?variant [*]) ?units

@@ -59,3 +59,10 @@
                 (-> entry
                     (update :product insert-id)
                     (update :variant insert-id)))))))
+
+(reg-all-of-query-sub
+  :variants-for-orders
+  (comp
+    (partial map (fn [entry]
+                   (update entry :variant insert-id)))
+    db/variants-for-orders))

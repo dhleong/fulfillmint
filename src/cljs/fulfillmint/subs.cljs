@@ -63,3 +63,16 @@
                            (get (:id for-order))
                            :quantity))))
          (sort-by (comp :name :part)))))
+
+(reg-sub
+  :ordered-variants-for-part
+  :<- [:variants-for-orders]
+  (fn [variants-ordered [_ part-id]]
+    (let [part-id (int part-id)] ; FIXME yuck?
+      (->> variants-ordered
+           (filter (fn [{:keys [parts]}]
+                     (contains? parts part-id)))
+           (reduce
+             (fn [m {:keys [variant ordered]}]
+               (assoc m (:id variant) ordered))
+             {})))))
