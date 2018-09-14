@@ -8,7 +8,7 @@
             [fulfillmint.views.widgets :refer [link]]))
 
 (defn view [id]
-  (let [part (<sub [:part id])
+    (let [part (<sub [:part id])
         variant->orders (<sub [:ordered-variants-for-part id])]
     [:<>
      [:h4 "Part #" id ": " (:name part)]
