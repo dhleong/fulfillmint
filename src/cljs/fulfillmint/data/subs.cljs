@@ -30,13 +30,6 @@
                                          product-id))
          (map insert-id))))
 
-(reg-all-of-query-sub
-  :parts-for-orders
-  (comp
-    (partial map (fn [entry]
-                   (update entry :part insert-id)))
-    db/parts-for-orders))
-
 (doseq [sub-name [:order :product :part]]
   (reg-sub
     sub-name
@@ -46,3 +39,23 @@
           insert-id
           (as-> e
             (assoc e :service-id (first (:service-ids e))))))))
+
+
+; ======= for reports =====================================
+
+(reg-all-of-query-sub
+  :parts-for-orders
+  (comp
+    (partial map (fn [entry]
+                   (update entry :part insert-id)))
+    db/parts-for-orders))
+
+(reg-sub
+  :part-uses-for-part
+  :<- [::db]
+  (fn [db [_ part-id]]
+    (->> (db/part-uses-for-part db (int part-id))
+         (map (fn [entry]
+                (-> entry
+                    (update :product insert-id)
+                    (update :variant insert-id)))))))

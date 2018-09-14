@@ -101,6 +101,23 @@
                :part part
                :needed used}))))
 
+(defn part-uses-for-part [db part-id]
+  (->> (d/q
+         '[:find (pull ?product [*]) (pull ?variant [*]) ?units
+           :in $, ?part-id
+           :where
+           [?part-use :part-use/part ?part-id]
+           [?part-use :part-use/units ?units]
+           [?variant :variant/parts ?part-use]
+           [?variant :variant/product ?product]
+           ]
+         db
+         part-id)
+       (map (fn [[product variant units]]
+              {:product product
+               :variant variant
+               :used units}))))
+
 (defn entity-by-id [db id]
   (d/pull db '[*] id))
 

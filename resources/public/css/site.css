@@ -3,3 +3,9 @@ body {
   padding: 0;
   font-family: sans-serif;
 }
+.makeable-variants .few-makeable {
+  background-color: #da0;
+}
+.makeable-variants .none-makeable {
+  background-color: #d00;
+}
