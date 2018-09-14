@@ -33,3 +33,33 @@
                   (str/includes?
                     (str/lower-case (->searchable r))
                     (str/lower-case query))))))))
+
+
+; ======= computed ========================================
+
+(reg-sub
+  :parts-by-id
+  :<- [:parts]
+  (fn [parts]
+    (reduce
+      (fn [m p]
+        (assoc m (:id p) p))
+      {}
+      parts)))
+
+
+; ======= reports =========================================
+
+(reg-sub
+  :parts-needed-for-orders
+  :<- [:parts-for-orders]
+  :<- [:parts-by-id]
+  (fn [[for-orders by-id]]
+    (->> for-orders
+         (map (fn [for-order]
+                (assoc for-order
+                       :available
+                       (-> by-id
+                           (get (:id for-order))
+                           :quantity))))
+         (sort-by (comp :name :part)))))

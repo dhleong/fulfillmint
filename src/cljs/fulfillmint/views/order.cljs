@@ -7,6 +7,11 @@
             [fulfillmint.views.widgets :refer [link]]))
 
 (defn view [id]
-  [:div "Order " id])
+  (if-let [o (<sub [:order id])]
+    [:<>
+     [:div "Order " (:service-id o)]
+     [:div (str o)]]
+
+    [:div "No such order"]))
 
 

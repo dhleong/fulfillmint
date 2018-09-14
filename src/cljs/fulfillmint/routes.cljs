@@ -41,6 +41,13 @@
   (defroute "/products/:id" [id]
     (navigate! :product id))
 
+  ; reports
+  (defroute "/reports" []
+    (navigate! :reports))
+
+  (defroute "/reports/:id" [id]
+    (navigate! :report (keyword id)))
+
   ; services
   (defroute "/services/:service-key/config" [service-key]
     (navigate! :service-config (keyword service-key)))

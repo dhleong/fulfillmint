@@ -16,6 +16,7 @@
             [fulfillmint.views.product :as product]
             [fulfillmint.views.products :as products]
             [fulfillmint.views.new-product :as new-product]
+            [fulfillmint.views.reports :as reports]
             ))
 
 ;; main
@@ -31,6 +32,8 @@
    :product #'product/view
    :products #'products/view
    :new-product #'new-product/view
+   :reports #'reports/view
+   :report #'reports/router
    :service-config #'service/config-view})
 
 (defn main []

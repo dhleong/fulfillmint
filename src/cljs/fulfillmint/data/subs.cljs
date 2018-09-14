@@ -29,3 +29,20 @@
     (->> (db/variants-for-product db (or (:id product-id)
                                          product-id))
          (map insert-id))))
+
+(reg-all-of-query-sub
+  :parts-for-orders
+  (comp
+    (partial map (fn [entry]
+                   (update entry :part insert-id)))
+    db/parts-for-orders))
+
+(doseq [sub-name [:order :product :part]]
+  (reg-sub
+    sub-name
+    :<- [::db]
+    (fn [db [_ entity-id]]
+      (-> (db/entity-by-id db (int entity-id))
+          insert-id
+          (as-> e
+            (assoc e :service-id (first (:service-ids e))))))))

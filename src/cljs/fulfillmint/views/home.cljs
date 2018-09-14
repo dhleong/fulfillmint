@@ -6,11 +6,15 @@
             [fulfillmint.util :refer [<sub >evt click>reset! fn-click]]
             [fulfillmint.views.new-part :as new-part]
             [fulfillmint.views.new-product :as new-product]
+            [fulfillmint.views.reports :as reports]
             [fulfillmint.views.widgets :refer [link]]))
 
 (defn existing-user-home []
   [:<>
    [:h4 "Welcome back to Fulfillmint!"]
+   [:h5 "Reports"]
+   [reports/links]
+
    [:h5 "Sections"]
    [:ul
     [:li [link {:href "/orders"}

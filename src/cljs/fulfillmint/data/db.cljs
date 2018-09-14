@@ -80,6 +80,29 @@
               (assoc part :part-use/units
                      (:part-use/units part-use))))))
 
+(defn parts-for-orders [db]
+  (->> (d/q
+         '[:find (pull ?part-id [*]) (sum ?total-parts-used)
+           :with ?order-items
+           :where
+           [?order :order/complete? false]
+           [?order :order/pending? false]
+           [?order :order/items ?order-items]
+           [?order-items :order-item/variants ?variants]
+           [?order-items :quantity ?quantity]
+           [?variants :variant/parts ?part-use]
+           [?part-use :part-use/part ?part-id]
+           [?part-use :part-use/units ?part-units]
+           [(* ?quantity ?part-units) ?total-parts-used]
+           ]
+         db)
+       (map (fn [[part used]]
+              {:db/id (:db/id part)
+               :part part
+               :needed used}))))
+
+(defn entity-by-id [db id]
+  (d/pull db '[*] id))
 
 ; ======= Validation ======================================
 
@@ -104,13 +127,15 @@
 (def create-part (transact!-with create-part-tx))
 
 (defn create-order-tx
-  [{:keys [service-id link buyer-name products pending?]
-    :or {pending? false}}]
+  [{:keys [service-id link buyer-name products complete? pending?]
+    :or {complete? false
+         pending? false}}]
   [{:kind :order
     :service-ids service-id
     :link (or link "")
     :buyer-name buyer-name
-    :pending? pending?
+    :order/complete? (or complete? false)
+    :order/pending? (or pending? false)
 
     :order/items
     (map
