@@ -1,11 +1,16 @@
 (ns ^{:author "Daniel Leong"
       :doc "reports"}
   fulfillmint.views.reports
-  (:require [fulfillmint.views.reports.parts-for-orders :as parts-for-orders]
+  (:require [fulfillmint.views.reports.ordered-variants :as ordered-variants]
+            [fulfillmint.views.reports.parts-for-orders :as parts-for-orders]
             [fulfillmint.views.widgets :refer [link]]))
 
 (def reports
-  {:parts-for-orders
+  {:ordered-variants
+   {:name "Ordered Product Variants"
+    :view ordered-variants/view}
+
+   :parts-for-orders
    {:name "Parts needed for Orders"
     :view parts-for-orders/view}})
 

@@ -76,3 +76,13 @@
              (fn [m {:keys [variant ordered]}]
                (assoc m (:id variant) ordered))
              {})))))
+
+(reg-sub
+  :ordered-variants
+  :<- [:variants-for-orders]
+  (fn [variants-ordered _]
+    (->> variants-ordered
+
+         ; group products together
+         (sort-by (juxt (comp :name :product)
+                        :name)))))

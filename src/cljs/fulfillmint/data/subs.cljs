@@ -64,5 +64,7 @@
   :variants-for-orders
   (comp
     (partial map (fn [entry]
-                   (update entry :variant insert-id)))
+                   (-> entry
+                       (update :variant insert-id)
+                       (update :product insert-id))))
     db/variants-for-orders))

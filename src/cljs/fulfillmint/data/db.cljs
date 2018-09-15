@@ -103,7 +103,7 @@
 
 (defn variants-for-orders [db]
   (->> (d/q
-         '[:find (pull ?variants [*]) (sum ?quantity)
+         '[:find (pull ?variants [*]) (pull ?product [*]) (sum ?quantity)
            :with ?order-items
            :where
            [?order :order/complete? false]
@@ -112,10 +112,12 @@
            [?order-items :order-item/variants ?variants]
            [?order-items :quantity ?quantity]
            [?variants :variant/parts ?part-use]
+           [?variants :variant/product ?product]
            ]
          db)
-       (map (fn [[variant ordered]]
+       (map (fn [[variant product ordered]]
               {:db/id (:db/id variant)
+               :product product
                :variant variant
                :parts (->> variant
                            :variant/parts
