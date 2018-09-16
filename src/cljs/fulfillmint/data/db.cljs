@@ -190,18 +190,28 @@
 
 ; ======= Datom creation ==================================
 
+(defn upsert-part-tx [{:keys [id name quantity unit supplier]}]
+  [(->> {:db/id id
+         :kind :part
+         :name name
+         :quantity quantity
+         :unit unit
+         :supplier supplier}
+        (filter second)
+        (into {}))])
+(def upsert-part (transact!-with upsert-part-tx))
+
 (defn create-part-tx [{:keys [name quantity unit supplier]
                        :or {quantity 0
                             unit "things"
-                            supplier ""}
-                       :as part}]
+                            supplier ""}}]
   {:pre [(string? name)
          (not (empty? name))]}
-  [{:kind :part
-    :name name
-    :quantity (or quantity 0) ; if nil is passed, :or above fails
-    :unit (or unit "things")
-    :supplier (or supplier "")}])
+  (upsert-part-tx
+    {:name name
+     :quantity (or quantity 0) ; if nil is passed, :or above fails
+     :unit (or unit "things")
+     :supplier (or supplier "")}))
 (def create-part (transact!-with create-part-tx))
 
 (defn create-order-tx

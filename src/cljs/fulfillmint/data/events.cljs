@@ -30,3 +30,10 @@
 (reg-create-event-conn
   :update-product
   db/upsert-product)
+
+(reg-event-conn
+  :set-part-quantity
+  [trim-v]
+  (fn [conn [part-id quantity]]
+    (db/upsert-part conn {:id (int part-id)
+                          :quantity (or quantity 0)})))

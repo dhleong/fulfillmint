@@ -10,6 +10,7 @@
             [fulfillmint.util :refer [<sub >evt vec-dissoc]
              :refer-macros [fn-click]]
             [fulfillmint.views.widgets :refer-macros [icon]]
+            [fulfillmint.views.widgets.fast-numeric]
             [fulfillmint.views.widgets.typeahead :refer [typeahead]]
             [fulfillmint.views.widgets.service-id-entry
              :refer [service-id-entry]]))
@@ -116,7 +117,7 @@
      (when (:name p)
        [bind-fields
         [:div.form-part
-         [:input {:field :numeric
+         [:input {:field :fast-numeric
                   :id (conj path :quantity)
                   :placeholder (str "# " (:unit p) " per product")}]]
         form]))])

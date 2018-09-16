@@ -40,8 +40,27 @@
         (is (contains? (->> all-parts
                             (map #(select-keys % [:name :quantity]))
                             (into #{}))
-                       {:name "Stabilizer" :quantity 0}))))
-    ))
+                       {:name "Stabilizer" :quantity 0}))))))
+
+(deftest update-part-test
+  (let [db (-> (empty-db)
+               (d/db-with (db/create-part-tx
+                            {:name "Compression Coil Catalyzer"
+                             :unit "coils"})))
+        original-part (->> db
+                           db/all-parts
+                           first)
+        part-id (:db/id original-part)]
+    (testing "Update single key"
+      (is (= 0 (:quantity original-part)))
+
+      (let [with-update (d/db-with
+                          db
+                          (db/upsert-part-tx
+                            {:id part-id
+                             :quantity 42}))
+            updated (db/entity-by-id with-update part-id)]
+        (is (= 42 (:quantity updated)))))))
 
 (deftest product-test
   (let [db (-> (empty-db)
