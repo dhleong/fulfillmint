@@ -16,3 +16,33 @@ body {
         background-color: #d00;
     }
 }
+
+.order-view {
+    .items {
+        .item {
+            .flex();
+
+            padding: 0.5em;
+
+            .quantity {
+                font-size: 150%;
+                padding: 0.5em;
+            }
+
+            .item-info, .parts {
+                .flex();
+                .flex-direction(column);
+
+                justify-content: center;
+            }
+
+            .item-info .variants, ul.parts {
+                margin: 0;
+            }
+
+            ul.parts {
+                .flex();
+            }
+        }
+    }
+}

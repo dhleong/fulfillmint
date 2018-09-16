@@ -11,6 +11,11 @@
     }
 }
 
+.flex-basis(@basis) {
+    -ms-flex-preferred-size: @basis;
+    flex-basis: @basis;
+}
+
 // shorthand; `flex: @values`
 .flex-shrt(@values) {
     -ms-flex: @values;

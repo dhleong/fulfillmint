@@ -102,6 +102,29 @@
                :part part
                :needed used}))))
 
+(defn parts-for-order [db order-id]
+  (->> (d/q
+         '[:find (pull ?part-id [*]) (sum ?total-parts-used)
+           :in $, ?order
+           :with ?order-items
+           :where
+           [?order :order/complete? false]
+           [?order :order/pending? false]
+           [?order :order/items ?order-items]
+           [?order-items :order-item/variants ?variants]
+           [?order-items :quantity ?quantity]
+           [?variants :variant/parts ?part-use]
+           [?part-use :part-use/part ?part-id]
+           [?part-use :part-use/units ?part-units]
+           [(* ?quantity ?part-units) ?total-parts-used]
+           ]
+         db
+         order-id)
+       (map (fn [[part used]]
+              {:db/id (:db/id part)
+               :part part
+               :needed used}))))
+
 (defn parts-for-product [db product-id]
   (->> (pull-many-for
          db
@@ -181,6 +204,17 @@
       [?order-item :order-item/product ?product-id]]
     product-id))
 
+(defn products-by-order [db order-id]
+  (pull-many-for
+    db
+    '[:find [?product-id ...]
+      :in $, ?order
+      :where
+      [?order :order/items ?order-item]
+      [?order :order/complete? false]
+      [?order :order/pending? false]
+      [?order-item :order-item/product ?product-id]]
+    order-id))
 
 ; ======= Validation ======================================
 
@@ -310,3 +344,41 @@
         (iterate dec -2)
         variants))))
 (def upsert-product (transact!-with upsert-product-tx))
+
+(defn complete-order-tx
+  "Marks the order with the given ID as complete, and 'consumes'
+   the parts for all the variants in all the items"
+  [order]
+  (cons {:db/id (:id order)
+         :order/complete? true}
+
+        (->> order
+             :items
+
+             ; map to [quantity, [part-use ...]]
+             (map (juxt :quantity
+                        (comp (partial mapcat :variant/parts) :variants)))
+
+             ; map to [[part-id, old-quantity, total-used]...]
+             (mapcat (fn [[quantity part-uses]]
+                       (map
+                         (fn [part-use]
+                           (let [old-quantity (-> part-use :part :quantity)]
+                             [(-> part-use :part-use/part :db/id)
+                              old-quantity
+                              (* quantity
+                                 (:part-use/units part-use))]))
+                         part-uses)))
+
+             ; group by part-id -> {:old :used}
+             (reduce (fn [m [part-id old-quantity total-used]]
+                       (-> m
+                           (assoc-in [part-id :old] old-quantity)
+                           (update-in [part-id :used] + total-used)))
+                     {})
+
+             ; now, convert to transactions
+             (map (fn [[part-id {:keys [old used]}]]
+                    [:db/cas part-id :quantity old (- old used)]))
+             )))
+(def complete-order (transact!-with complete-order-tx))

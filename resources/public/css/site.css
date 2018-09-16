@@ -9,3 +9,29 @@ body {
 .makeable-variants .none-makeable {
   background-color: #d00;
 }
+.order-view .items .item {
+  display: -ms-flexbox !important;
+  display: flex;
+  padding: 0.5em;
+}
+.order-view .items .item .quantity {
+  font-size: 150%;
+  padding: 0.5em;
+}
+.order-view .items .item .item-info,
+.order-view .items .item .parts {
+  display: -ms-flexbox !important;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  justify-content: center;
+}
+.order-view .items .item .item-info .variants,
+.order-view .items .item ul.parts {
+  margin: 0;
+}
+.order-view .items .item ul.parts {
+  display: -ms-flexbox !important;
+  display: flex;
+}

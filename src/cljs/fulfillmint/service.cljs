@@ -1,7 +1,8 @@
 (ns ^{:author "Daniel Leong"
       :doc "Selling Service integration / abstraction"}
   fulfillmint.service
-  (:require [fulfillmint.service.etsy.config :as etsy-config]))
+  (:require [fulfillmint.service.etsy.config :as etsy-config]
+            [fulfillmint.service.util :refer [unpack-service-id]]))
 
 (def ^:private services
   {:etsy
@@ -31,3 +32,8 @@
     [config]
 
     [:div.error "No config for this provider"]))
+
+(defn describe-service-id [id]
+  (let [[service raw-id] (unpack-service-id id)
+        service-name (get-in services [service :name])]
+    (str raw-id " (" service-name ")")))

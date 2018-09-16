@@ -4,7 +4,7 @@
   (:require [re-frame.core :refer [reg-sub subscribe]]
             [fulfillmint.data.db :as db]))
 
-(defn- insert-id [item]
+(defn insert-id [item]
   (-> item
       (dissoc :db/id)
       (assoc :id (:db/id item))))
@@ -30,15 +30,59 @@
                                          product-id))
          (map insert-id))))
 
-(doseq [sub-name [:order :part]]
-  (reg-sub
-    sub-name
-    :<- [::db]
-    (fn [db [_ entity-id]]
-      (-> (db/entity-by-id db (int entity-id))
-          insert-id
-          (as-> e
-            (assoc e :service-id (first (:service-ids e))))))))
+(reg-sub
+  :part
+  :<- [::db]
+  (fn [db [_ entity-id]]
+    (-> (db/entity-by-id db (int entity-id))
+        insert-id
+        (as-> e
+          (assoc e :service-id (first (:service-ids e)))))))
+
+(defn inflate-variant [parts variant]
+  (-> variant
+      :variant
+      (update :variant/parts
+              (fn [part-uses]
+                (js/console.log "INFLATE" part-uses " FROM " parts )
+                (map
+                  (fn [part-use]
+                    (assoc part-use
+                           :part
+                           (get parts (-> part-use
+                                          :part-use/part
+                                          :db/id))))
+                  part-uses)))))
+
+(defn order-from
+  [db products variants parts order-id]
+  (let [o (db/entity-by-id db (int order-id))]
+    (-> o
+        insert-id
+        (assoc :service-id (first (:service-ids o)))
+        (dissoc :order/items)
+        (assoc :items
+               (map (fn [item]
+                      (let [raw-variants (map (fn [{:db/keys [id]}]
+                                                (get variants id))
+                                              (:order-item/variants item))]
+                        (-> item
+                            insert-id
+                            (dissoc :order-item/variants :order-item/product)
+                            (assoc :product (-> raw-variants first :product))
+                            (assoc :variants (map (partial inflate-variant parts)
+                                                  raw-variants)))))
+                    (:order/items o))))))
+
+(reg-sub
+  :order
+  (fn [[_ order-id]]
+    [(subscribe [::db])
+     (subscribe [:products-by-order order-id])
+     (subscribe [::variants-by-id-for-orders])
+     (subscribe [::parts-by-id-for-orders])])
+  (fn [[db products variants parts] [_ order-id]]
+    (order-from db products variants parts order-id)))
 
 (reg-sub
   :product
@@ -64,14 +108,31 @@
          (map insert-id))))
 
 
+; ======= order inflation =================================
+
+(defn products-by-order
+  [db order-id]
+  (->> (db/products-by-order db (int order-id))
+       (map insert-id)))
+
+(reg-sub
+  :products-by-order
+  :<- [::db]
+  (fn [db [_ order-id]]
+    (products-by-order db order-id)))
+
+
 ; ======= for reports =====================================
 
-(reg-all-of-query-sub
-  :parts-for-orders
+(def parts-for-orders
   (comp
     (partial map (fn [entry]
                    (update entry :part insert-id)))
     db/parts-for-orders))
+
+(reg-all-of-query-sub
+  :parts-for-orders
+  parts-for-orders)
 
 (reg-sub
   :part-uses-for-part
@@ -93,11 +154,39 @@
                    (update m k insert-id))
                  m m))))
 
-(reg-all-of-query-sub
-  :variants-for-orders
+
+(def variants-for-orders
   (comp
     (partial map (fn [entry]
                    (-> entry
                        (update :variant insert-id)
                        (update :product insert-id))))
     db/variants-for-orders))
+
+(reg-all-of-query-sub
+  :variants-for-orders
+  variants-for-orders)
+
+
+(defn ->by-id-for-orders
+  ([entities]
+   (->by-id-for-orders entities nil))
+  ([entities _]
+   (->> entities
+        (reduce
+          (fn [m entity]
+            (assoc m (:id entity) entity))
+          {}))))
+
+(reg-sub
+  ::parts-by-id-for-orders
+  :<- [:parts-for-orders]
+  (fn [parts-for-orders _]
+    (->> parts-for-orders
+         (map :part)
+         ->by-id-for-orders)))
+
+(reg-sub
+  ::variants-by-id-for-orders
+  :<- [:variants-for-orders]
+  (comp ->by-id-for-orders))

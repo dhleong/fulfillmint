@@ -37,3 +37,9 @@
   (fn [conn [part-id quantity]]
     (db/upsert-part conn {:id (int part-id)
                           :quantity (or quantity 0)})))
+
+(reg-event-conn
+  :mark-order-complete!
+  [trim-v]
+  (fn [conn [order]]
+    (db/complete-order conn order)))
