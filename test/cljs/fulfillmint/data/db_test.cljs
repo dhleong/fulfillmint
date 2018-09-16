@@ -48,7 +48,7 @@
                (d/db-with (db/create-part-tx
                             {:name "Compression Coil Catalyzer"
                              :unit "coils"}))
-               (d/db-with (db/create-product-tx
+               (d/db-with (db/upsert-product-tx
                             {:name "Firefly"
                              :service-ids ["firefly/03-k64"]
                              :variants
@@ -56,7 +56,7 @@
                                :service-ids ["firefly/serenity"]
                                :default? true
                                :parts {1 1}}]}))
-               (d/db-with (db/create-product-tx
+               (d/db-with (db/upsert-product-tx
                             {:name "Captain"
                              :service-ids ["firefly/captain"]
                              :variants
@@ -64,9 +64,29 @@
                                :service-ids ["firefly/mreynolds"]
                                :default? true
                                :parts {1 1}}]})))]
-    (testing "create-product works"
+    (testing "upsert-product creates"
       (let [all-products (db/all-products db)]
         (is (= 2 (count all-products)))))
+
+    (testing "upsert-product updates"
+      (let [with-update (d/db-with db (db/upsert-product-tx
+                                        {:name "Firefly2"
+                                         :service-ids ["firefly/03-k64"]
+                                         :variants
+                                         [{:id 3
+                                           :name "Serenity2"
+                                           :service-ids ["firefly/serenity"]
+                                           :default? true
+                                           :parts {1 2}}]}))
+            updated (db/product-by-id with-update [:service-ids "firefly/03-k64"])]
+        (is (= 2 (count (db/all-products with-update))))
+        (is (= "Firefly2" (:name updated)))
+        (is (= "Serenity2" (-> updated :variants first :name)))
+        (is (= [{:part-use/part {:db/id 1}
+                 :part-use/units 2}]
+               (->> updated :variants first :variant/parts
+                    (map #(select-keys % [:part-use/part :part-use/units])))
+               ))))
 
     (testing "variants-for-product query"
       (let [variants (db/variants-for-product db [:service-ids "firefly/03-k64"])]

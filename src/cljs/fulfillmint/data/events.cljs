@@ -25,4 +25,14 @@
 
 (reg-create-event-conn
   :create-product
-  db/create-product)
+  db/upsert-product)
+
+(reg-create-event-conn
+  :update-product
+  db/upsert-product)
+
+;; (reg-event-conn
+;;   :update-product
+;;   [trim-v]
+;;   (fn [conn [thing]]
+;;     (println "PERFORM:" (db/upsert-product-tx thing))))

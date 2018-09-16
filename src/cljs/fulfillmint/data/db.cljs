@@ -1,7 +1,8 @@
 (ns ^{:author "Daniel Leong"
       :doc "Abstractions over data store"}
   fulfillmint.data.db
-  (:require [datascript.core :as d]
+  (:require [clojure.string :as str]
+            [datascript.core :as d]
             [fulfillmint.data.persist :as p]
             [fulfillmint.data.schema :refer [schema]]))
 
@@ -101,6 +102,21 @@
                :part part
                :needed used}))))
 
+(defn parts-for-product [db product-id]
+  (->> (pull-many-for
+         db
+         '[:find [?part-id ...]
+           :in $, ?product-id
+           :where
+           [?variant :variant/parts ?part-use]
+           [?variant :variant/product ?product-id]
+           [?part-use :part-use/part ?part-id]]
+         product-id)
+       (reduce
+         (fn [m part]
+           (assoc m (:db/id part) part))
+         {})))
+
 (defn variants-for-orders [db]
   (->> (d/q
          '[:find (pull ?variants [*]) (pull ?product [*]) (sum ?quantity)
@@ -144,6 +160,27 @@
 
 (defn entity-by-id [db id]
   (d/pull db '[*] id))
+
+(defn product-by-id [db id]
+  (let [p (entity-by-id db id)
+        variants (variants-for-product db id)]
+    (assoc p :variants variants)))
+
+
+; ======= order queries ===================================
+
+(defn orders-by-product [db product-id]
+  (pull-many-for
+    db
+    '[:find [?order ...]
+      :in $, ?product-id
+      :where
+      [?order :order/items ?order-item]
+      [?order :order/complete? false]
+      [?order :order/pending? false]
+      [?order-item :order-item/product ?product-id]]
+    product-id))
+
 
 ; ======= Validation ======================================
 
@@ -201,55 +238,65 @@
       [:db/add eid :service-ids id])
     service-ids))
 
-(defn- create-variant-tx
+(defn- upsert-variant-tx
   "Generate the sequence of transact statements
    used to add the variant `v` to the given `product-id`.
    `product-id` may be a lookup ref or a temporary eid.
    If `variant-id` is not provided, the temporary eid `-1`
    will be used for it."
   ([product-id v]
-   (create-variant-tx product-id -1 v))
+   (upsert-variant-tx product-id -1 v))
   ([product-id variant-id v]
-   (cons
-     (->> {:db/id variant-id
-           :kind :variant
-           :name (:name v)
+   (let [variant-id (or (:id v)
+                        variant-id)]
+     (concat
+       (when (:id v)
+         ; if we're updating a variant, delete any parts before
+         ; recreating them below (otherwise, we get extras)
+         [[:db.fn/retractAttribute variant-id :variant/parts]])
 
-           :variant/product product-id
-           :variant/default? (boolean
-                               (:default? v))
-           :variant/group (:group v)
-           :variant/parts
-           (->> v
-                :parts
-                (filter second)
-                (map (fn [[part-id units]]
-                       {:kind :part-use
-                        :part-use/part part-id
-                        :part-use/units units})))}
+       [(->> {:db/id variant-id
+              :kind :variant
+              :name (:name v)
 
-          ; remove nil values
-          (filter second)
-          (into {}))
+              :variant/product product-id
+              :variant/default? (boolean
+                                  (:default? v))
+              :variant/group (let [g (:group v)]
+                               (when-not (str/blank? g)
+                                 g))
+              :variant/parts
+              (->> v
+                   :parts
+                   (filter second)
+                   (map (fn [[part-id units]]
+                          {:kind :part-use
+                           :part-use/part {:db/id part-id}
+                           :part-use/units units})))}
 
-     (add-service-ids variant-id (:service-ids v)))))
-(def create-variant (transact!-with create-variant-tx))
+             ; remove nil values
+             (filter second)
+             (into {}))]
 
-(defn create-product-tx [{:keys [name variants service-ids]}]
+       (add-service-ids variant-id (:service-ids v))))))
+(def create-variant (transact!-with upsert-variant-tx))
+
+(defn upsert-product-tx [{:keys [name variants service-ids] :as p}]
   {:pre [(string? name)
          (every? valid-variant? variants)]}
-  (concat
-    [{:db/id -1
-      :kind :product
-      :name name}]
+  (let [product-id (:id p -1)] ; if :id is present, upsert
+    (concat
+      [{:db/id product-id
+        :kind :product
+        :name name}]
 
-    (add-service-ids -1 service-ids)
+      (add-service-ids product-id service-ids)
 
-    (mapcat
-      (fn [id v]
-        (create-variant-tx -1 id v))
+      (mapcat
+        (fn [variant-temp-id v]
+          (upsert-variant-tx product-id variant-temp-id v))
 
-      ; generate temp ids for each variant
-      (iterate dec -2)
-      variants)))
-(def create-product (transact!-with create-product-tx))
+        ; generate temp ids for each variant
+        (iterate dec -2)
+        variants))))
+(def upsert-product (transact!-with upsert-product-tx))

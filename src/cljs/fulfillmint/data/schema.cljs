@@ -46,8 +46,7 @@
    :variant/default? {:db/cardinality :db.cardinality/one
                       :db/doc "Whether this variant is chosen by default"}
 
-   :variant/group {:db/valueType :db.type/ref
-                   :db/cardinality :db.cardinality/one
+   :variant/group {:db/cardinality :db.cardinality/one
                    :db/doc "The variant group this is associated with (if any)"}
 
    :variant/parts {:db/valueType :db.type/ref

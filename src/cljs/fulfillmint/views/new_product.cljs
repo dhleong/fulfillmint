@@ -5,13 +5,16 @@
             [reagent.core :as r]
             [reagent-forms.core :refer [bind-fields]]
             [fulfillmint.service :as services]
-            [fulfillmint.service.util :refer [->service-id]]
+            [fulfillmint.service.util :refer [->service-id
+                                              unpack-service-id]]
             [fulfillmint.util :refer [<sub >evt vec-dissoc]
              :refer-macros [fn-click]]
             [fulfillmint.views.widgets :refer-macros [icon]]
             [fulfillmint.views.widgets.typeahead :refer [typeahead]]
             [fulfillmint.views.widgets.service-id-entry
              :refer [service-id-entry]]))
+
+; ======= form -> product =================================
 
 (defn- update-service-ids
   [entity]
@@ -43,6 +46,46 @@
       (update-service-ids)
       (update :variants (partial map clean-variant))
       ))
+
+
+; ======= product -> form =================================
+
+(defn- service-ids->form [entity]
+  (-> entity
+      (dissoc :service-ids)
+      (assoc ::services
+             (mapv
+               (fn [id]
+                 (let [[service raw-id] (unpack-service-id id)]
+                   {:service service :id (int raw-id)}))
+               (:service-ids entity)))))
+
+(defn- variant->form [parts-by-id v]
+  (-> v
+      (service-ids->form)
+      (dissoc :kind)
+      (dissoc :variant/product)
+
+      (dissoc :variant/group)
+      (assoc :group (:variant/group v))
+
+      (dissoc :variant/parts)
+      (assoc ::parts (reduce (fn [m {:part-use/keys [part units]}]
+                               (assoc m
+                                      (count m)
+                                      {:part (get parts-by-id (:db/id part))
+                                       :quantity units}))
+                             {}
+                             (:variant/parts v)))))
+
+(defn product->form [parts-by-id product]
+  (-> product
+      (service-ids->form)
+      (dissoc :kind)
+      (update :variants (partial mapv (partial variant->form parts-by-id)))))
+
+
+; ======= UI ==============================================
 
 (defn- service-ids-form [form kind path]
   (let [entries (->> (get-in @form path)
@@ -118,47 +161,63 @@
    [service-ids-form form :variant [:variants index ::services]]
    ])
 
+
+; ======= Shared product editing form =====================
+
+(defn product-edit-form
+  [& {:keys [initial-form submit-label on-submit]}]
+  (r/with-let [form (r/atom initial-form)]
+    [:form {:on-submit (fn-click
+                         (let [product @form]
+                           (println product)
+                           (when-not (empty? (:name product))
+                             (on-submit (clean-product product)))))}
+     [bind-fields
+      [:<>
+       ; TODO validate:
+       [:div.form-part
+        [:input {:field :text
+                 :id :name
+                 :autoComplete 'off
+                 :placeholder "Product Name"}]]]
+      form]
+
+     [service-ids-form form :product [::services]]
+
+     ;; (println "Variants:" (:variants @form))
+     (for [i (range (count (:variants @form)))]
+       ^{:key i}
+       [variant-form form i])
+
+     [:div.form-part
+      [:a {:href "#"
+           :on-click (fn-click
+                       (swap! form update :variants conj
+                              {::services []}))}
+       "Add another Variant"]]
+
+     [:div.form-part
+      [:input {:type :submit
+               :value submit-label}]]]
+    ))
+
+
+; ======= public view =====================================
+
 (defn view []
-  (r/with-let [form (r/atom {::services []
-                             :variants [{::services []}]})
-               just-added (r/atom nil)]
-    [:<>
-     [:h5 "New Product"]
+  (r/with-let [just-added (r/atom nil)]
+     [:<>
 
-     (when-some [added @just-added]
-       [:p "Just added: " (:name added)])
+      [:h5 "New Product"]
 
-     [:form {:on-submit (fn-click
-                          (let [product @form]
-                            (println (clean-product product))
-                            (when-not (empty? (:name product))
-                              (let [cleaned (clean-product product)]
-                                (>evt [:create-product cleaned])
-                                (reset! just-added cleaned)))))}
-      [bind-fields
-       [:<>
-        ; TODO validate:
-        [:div.form-part
-         [:input {:field :text
-                  :id :name
-                  :autoComplete 'off
-                  :placeholder "Product Name"}]]]
-       form]
+      (when-some [added @just-added]
+        [:p "Just added: " (:name added)])
 
-      [service-ids-form form :product [::services]]
-
-      (for [i (range (count (:variants @form)))]
-        ^{:key i}
-        [variant-form form i])
-
-      [:div.form-part
-       [:a {:href "#"
-            :on-click (fn-click
-                        (swap! form update :variants conj
-                               {::services []}))}
-        "Add another Variant"]]
-
-      [:div.form-part
-       [:input {:type :submit
-                :value "Create Product"}]]]
-     ]))
+      [product-edit-form
+       :initial-form {::services []
+                      :variants [{::services []}]}
+       :submit-label "Create Product"
+       :on-submit (fn on-submit [product]
+                    (println product)
+                    (>evt [:create-product product])
+                    (reset! just-added product))]]))

@@ -30,7 +30,7 @@
                                          product-id))
          (map insert-id))))
 
-(doseq [sub-name [:order :product :part]]
+(doseq [sub-name [:order :part]]
   (reg-sub
     sub-name
     :<- [::db]
@@ -39,6 +39,29 @@
           insert-id
           (as-> e
             (assoc e :service-id (first (:service-ids e))))))))
+
+(reg-sub
+  :product
+  :<- [::db]
+  (fn [db [_ product-id]]
+    (-> (db/product-by-id db (int product-id))
+        insert-id
+        (update :variants
+                (partial map (fn [v]
+                               (-> v
+                                   insert-id
+                                   (update :variant/parts
+                                           (partial map insert-id)))))))))
+
+
+; ======= order filters ===================================
+
+(reg-sub
+  :orders-by-product
+  :<- [::db]
+  (fn [db [_ product-id]]
+    (->> (db/orders-by-product db (int product-id))
+         (map insert-id))))
 
 
 ; ======= for reports =====================================
@@ -59,6 +82,16 @@
                 (-> entry
                     (update :product insert-id)
                     (update :variant insert-id)))))))
+
+(reg-sub
+  :parts-for-product
+  :<- [::db]
+  (fn [db [_ product-id]]
+    (as-> (db/parts-for-product db (int product-id))
+      m
+      (reduce-kv (fn [m k v]
+                   (update m k insert-id))
+                 m m))))
 
 (reg-all-of-query-sub
   :variants-for-orders

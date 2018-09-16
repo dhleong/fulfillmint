@@ -33,7 +33,7 @@
             [:td (:name variant)]
             [:td used]
 
-            ; TODO base class on variants actually ordered
+            ; TODO base class on # variants actually ordered
             [:td {:class (case makeable
                            0 "none-makeable"
                            (1 2) "few-makeable")}
