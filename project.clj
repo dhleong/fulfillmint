@@ -7,6 +7,7 @@
 
                  [kibu/pushy "0.3.8"]
                  [cljs-ajax "0.7.3"]
+                 [com.cemerick/url "0.1.1"]
 
                  ; data querying and persistence
                  [datascript "0.16.6"]
