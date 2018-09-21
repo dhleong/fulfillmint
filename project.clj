@@ -27,7 +27,7 @@
             [lein-npm "0.6.2"]]
 
   ; npm is only needed for installing test dependencies
-  :npm {:devDependencies [[karma "2.0.3"]
+  :npm {:devDependencies [[karma "3.0.0"]
                           [karma-cljs-test "0.1.0"]
                           [karma-chrome-launcher "2.2.0"]]}
 
