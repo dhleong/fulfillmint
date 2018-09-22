@@ -11,6 +11,8 @@
                  :db/doc "Something's service IDs (it might have more than one)"}
    :kind {:db/cardinality :db.cardinality/one
           :db/doc "The kind of entity"}
+   :notes {:db/cardinality :db.cardinality/one
+           :db/doc "Notes about the entity"}
    })
 
 (def order-schema
@@ -26,7 +28,7 @@
                         :db/doc "The product an order item is for"}
    :order-item/variants {:db/valueType :db.type/ref
                          :db/cardinality :db.cardinality/many
-                         :db/doc "The product an order item is for"}})
+                         :db/doc "The product an order item is for"} })
 
 ; component of :variant/parts
 (def part-use-schema

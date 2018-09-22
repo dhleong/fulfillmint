@@ -268,6 +268,7 @@
          :order-item/variants (mapv #(or (:id %)
                                          [:service-ids %])
                                     (:variants p))
+         :notes (:notes p "")
          :quantity (:quantity p 1)})
       products)}])
 (def create-order (transact!-with create-order-tx))
